@@ -36,6 +36,13 @@ type problemDetails struct {
 	TraceID string `json:"traceId,omitempty"`
 }
 
+func writeProblemJSON(w http.ResponseWriter, status int, problemType, title string) {
+	body, _ := json.Marshal(problemDetails{Type: problemType, Title: title, Status: status, TraceID: traceID()})
+	w.Header().Set("Content-Type", "application/problem+json; charset=utf-8")
+	w.WriteHeader(status)
+	_, _ = w.Write(body)
+}
+
 func writeProblem(w http.ResponseWriter, status int, problemType, title string) {
 	writeJSON(w, status, problemDetails{Type: problemType, Title: title, Status: status, TraceID: traceID()})
 }

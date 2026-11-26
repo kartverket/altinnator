@@ -12,10 +12,12 @@ type Mock struct {
 }
 
 func New() *Mock {
+	tokens := newTokens()
 	m := &Mock{mux: http.NewServeMux(), registry: newRegistry()}
 	resources := &resourceRegistry{registry: m.registry}
 
 	m.mux.HandleFunc("GET "+resourcePath+"/{id}", resources.handleGet)
+	m.mux.HandleFunc("GET /authentication/api/v1/exchange/maskinporten", handleExchange(tokens))
 	return m
 }
 
