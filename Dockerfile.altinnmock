@@ -1,0 +1,14 @@
+FROM golang:1.27.4-alpine3.24@sha256:70bd7ddea8b6cbe5d6943cde279d6b67feb10cc924fb9100d1d8757c1575b280 AS builder
+WORKDIR /workspace
+COPY go.mod go.sum ./
+RUN --mount=type=cache,target=/go/pkg/mod go mod download
+COPY cmd/altinnmock/ cmd/altinnmock/
+COPY internal/altinnmock/ internal/altinnmock/
+RUN --mount=type=cache,target=/go/pkg/mod --mount=type=cache,target=/root/.cache/go-build \
+    CGO_ENABLED=0 go build -trimpath -o altinnmock ./cmd/altinnmock
+
+FROM scratch
+COPY --from=builder /workspace/altinnmock /altinnmock
+USER 65532:65532
+EXPOSE 8090
+ENTRYPOINT ["/altinnmock"]

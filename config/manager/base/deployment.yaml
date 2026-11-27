@@ -17,6 +17,50 @@ spec:
         app: altinnator
     spec:
       automountServiceAccountToken: true
+      initContainers:
+        # Texas (https://github.com/nais/texas) gets Maskinporten tokens for Altinnator, so only Texas reads the
+        # Maskinporten client's key. As a native sidecar, it starts before Altinnator and runs beside it.
+        - env:
+            # Loopback only, so only containers in this pod can get tokens
+            - name: BIND_ADDRESS
+              value: 127.0.0.1:3000
+            - name: PROBE_BIND_ADDRESS
+              value: 0.0.0.0:3001
+            - name: MASKINPORTEN_ENABLED
+              value: "true"
+          envFrom:
+            - configMapRef:
+                name: altinnator-texas
+            - secretRef:
+                name: altinnator-maskinporten
+          image: ghcr.io/nais/texas
+          name: texas
+          ports:
+            - containerPort: 3001
+              name: texas-probes
+          resources:
+            limits:
+              memory: 256Mi
+            requests:
+              cpu: 10m
+              memory: 32Mi
+          restartPolicy: Always
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            privileged: false
+            readOnlyRootFilesystem: true
+            runAsGroup: 65532
+            runAsNonRoot: true
+            runAsUser: 65532
+            seccompProfile:
+              type: RuntimeDefault
+          startupProbe:
+            httpGet:
+              path: /healthz
+              port: texas-probes
       containers:
         - args:
             - -d
@@ -26,6 +70,9 @@ spec:
           env:
             - name: GOMEMLIMIT
               value: "230MiB"
+            # In the pod, localhost is the pod itself. host.docker.internal is your host, where the mock runs.
+            - name: ALTINNATOR_ALTINN_PLATFORM_BASE_URL
+              value: http://host.docker.internal:8090
           envFrom:
             - configMapRef:
                 name: altinnator-env

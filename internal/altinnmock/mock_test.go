@@ -20,6 +20,17 @@ var _ = Describe("Changing a resource directly in the mock", func() {
 		Expect(second["createdAt"]).To(Equal(first["createdAt"]))
 	})
 
+	It("keeps the resource as Altinn would, without Altinn's checks", func() {
+		incomplete := map[string]any{"identifier": "kv-test", "somethingElse": "x"}
+
+		Expect(mock.SetResource(incomplete)).To(Succeed())
+
+		stored, found := mock.Resource("kv-test")
+		Expect(found).To(BeTrue())
+		Expect(stored).NotTo(HaveKey("somethingElse"))
+		Expect(stored).To(HaveKeyWithValue("delegable", true))
+	})
+
 	It("refuses a resource without an identifier", func() {
 		Expect(mock.SetResource(map[string]any{"title": texts("kv-test")})).To(HaveOccurred())
 	})

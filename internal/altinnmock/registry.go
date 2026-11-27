@@ -41,6 +41,19 @@ func (r *registry) get(id string) (map[string]any, bool) {
 	return withMetadata(resource), true
 }
 
+func (r *registry) create(resource map[string]any) bool {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	id := resource["identifier"].(string)
+	if _, taken := r.resources[id]; taken {
+		return false
+	}
+	now := now()
+	r.lastVersionID++
+	r.resources[id] = &stored{createdAt: now, newest: version{r.lastVersionID, resource, now}}
+	return true
+}
+
 func (r *registry) put(resource map[string]any) {
 	r.mu.Lock()
 	defer r.mu.Unlock()

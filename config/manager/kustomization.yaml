@@ -11,9 +11,22 @@ images:
 - name: controller
   newName: altinnator
   newTag: latest
+- name: ghcr.io/nais/texas
+  newTag: 2026-11-05-083041-a994632
+  digest: sha256:f2476eba671fc289a1268feef5c5a1fbe6fc0a266ec9f990038d059aa90ce678
 
 configMapGenerator:
 - envs:
   - base/.env
   name: altinnator-env
+  namespace: altinnator-system
+- envs:
+  - base/texas.env
+  name: altinnator-texas
+  namespace: altinnator-system
+
+secretGenerator:
+- envs:
+  - base/maskinporten.env
+  name: altinnator-maskinporten
   namespace: altinnator-system
